@@ -1,0 +1,25 @@
+{
+  "name": "telegram-audio-converter-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot that converts audio files to MP3, WAV, OGG using ffmpeg",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/processManager.js",
+    "start-direct": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "fluent-ffmpeg": "^2.1.2",
+    "fs-extra": "^11.2.0",
+    "telegram": "^2.26.22",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
