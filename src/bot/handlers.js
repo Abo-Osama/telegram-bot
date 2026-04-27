@@ -24,13 +24,15 @@ const cb = (str) => Buffer.from(str);
 const coverImages = {
   'jmal':   { file: path.join(__dirname, '../ش_جمال.jpg'),          label: 'شــ. جمال عبدالرحمن' },
   'mohd':   { file: path.join(__dirname, '../ش_محمد.jpg'),          label: 'شــ. محمد يحيى' },
+  'marwan': { file: path.join(__dirname, '../ش_مروان.jpeg'),        label: 'شــ. مروان مجدي' },
   'mihrab': { file: path.join(__dirname, '../تلاوات_المحراب.jpg'),  label: 'تلاوات المحراب' },
   'zad':    { file: path.join(__dirname, '../زاد_المسلم.jpg'),      label: 'زاد المسلم' },
 };
 
 const authorPresets = {
-  'mohd': 'شــ. محمد يحيى',
-  'jmal': 'شــ. جمال عبدالرحمن',
+  'mohd':   'شــ. محمد يحيى',
+  'jmal':   'شــ. جمال عبدالرحمن',
+  'marwan': 'شــ. مروان مجدي',
 };
 
 module.exports = (client) => {
@@ -149,6 +151,10 @@ module.exports = (client) => {
     } finally {
       await client.deleteMessages(chatId, [messageId], { revoke: true }).catch(()=>null);
       await fileUtils.cleanupFiles(inputFilePath, outputFilePath);
+      // Clean up user-uploaded custom cover if present
+      if (session.customCoverPath) {
+        await fileUtils.cleanupFiles(session.customCoverPath).catch(()=>null);
+      }
     }
   };
 
@@ -170,6 +176,16 @@ module.exports = (client) => {
     // ── Cover selection ─────────────────────────────────────────────────────
     if (data.startsWith('cover:')) {
       const coverKey = data.split(':')[1];
+
+      // Handle custom image upload from device
+      if (coverKey === 'custom') {
+        session.step = 'WAITING_CUSTOM_COVER';
+        sessions.set(userId, session);
+        await safeEdit(chatId, session.coverMsgId, '📁 *أرسل الصورة التي تريدها كغلاف:*', null);
+        try { await event.answer({ text: 'أرسل الصورة من جهازك' }); } catch(_) {}
+        return;
+      }
+
       const cover = coverImages[coverKey];
       if (!cover) return;
 
@@ -184,6 +200,7 @@ module.exports = (client) => {
       const authorButtons = [
         [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
         [Button.inline('شــ. جمال عبدالرحمن', cb('author:jmal'))],
+        [Button.inline('شــ. مروان مجدي', cb('author:marwan'))],
         [Button.inline('✏️ اكتب اسم تاني', cb('author:custom'))],
         [Button.inline('⏭ تخطي', cb('author:skip'))],
       ];
@@ -283,6 +300,42 @@ module.exports = (client) => {
         return safeSendMessage(chatId, { message: '🛑 *تم إلغاء العملية.*', parseMode: 'markdown' });
       }
 
+      // User sent a custom cover image from their device
+      if (session.step === 'WAITING_CUSTOM_COVER') {
+        const img = message.media;
+        if (!img || !(img instanceof Api.MessageMediaDocument || img instanceof Api.MessageMediaPhoto)) {
+          return safeSendMessage(chatId, { message: '⚠️ *أرسل صورة فقط.*', parseMode: 'markdown' });
+        }
+
+        const customCoverPath = fileUtils.getTempFilePath('jpg');
+        try {
+          await client.downloadMedia(message.media, { outputFile: customCoverPath });
+        } catch (e) {
+          return safeSendMessage(chatId, { message: `❌ *فشل تحميل الصورة:* ${e.message}`, parseMode: 'markdown' });
+        }
+
+        session.coverFilePath = customCoverPath;
+        session.customCoverPath = customCoverPath; // mark for cleanup
+        session.step = 'WAITING_AUTHOR';
+        sessions.set(userId, session);
+
+        await safeSendMessage(chatId, { message: '✅ *تم استلام الصورة!*', parseMode: 'markdown' });
+
+        const authorButtons = [
+          [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
+          [Button.inline('شــ. جمال عبدالرحمن', cb('author:jmal'))],
+          [Button.inline('شــ. مروان مجدي', cb('author:marwan'))],
+          [Button.inline('✏️ اكتب اسم تاني', cb('author:custom'))],
+          [Button.inline('⏭ تخطي', cb('author:skip'))],
+        ];
+
+        return safeSendMessage(chatId, {
+          message: '👤 *اختر اسم المؤلف:*',
+          parseMode: 'markdown',
+          buttons: authorButtons
+        });
+      }
+
       // User is typing a custom author name
       if (session.step === 'WAITING_AUTHOR_TEXT') {
         if (text.length > 0) {
@@ -373,8 +426,10 @@ module.exports = (client) => {
       const coverButtons = [
         [Button.inline('شــ. جمال عبدالرحمن', cb('cover:jmal'))],
         [Button.inline('شــ. محمد يحيى', cb('cover:mohd'))],
+        [Button.inline('شــ. مروان مجدي', cb('cover:marwan'))],
         [Button.inline('تلاوات المحراب', cb('cover:mihrab'))],
         [Button.inline('زاد المسلم', cb('cover:zad'))],
+        [Button.inline('📁 رفع صورة من جهازك', cb('cover:custom'))],
       ];
 
       const coverMsg = await safeSendMessage(chatId, { 
