@@ -15,7 +15,7 @@ const config = require('../config');
 const logger = require('../utils/logger');
 const sessions = require('../state/sessions');
 const fileUtils = require('../utils/fileUtils');
-const { convertAudio } = require('../conversion/audioConverter');
+const { convertAudio, getAudioDuration } = require('../conversion/audioConverter');
 
 // GramJS requires callback data as Buffer, not string
 const cb = (str) => Buffer.from(str);
@@ -112,15 +112,24 @@ module.exports = (client) => {
       const finalBaseName = titleName || path.parse(fileName).name;
       const convertedFileName = `${finalBaseName}.${targetFormat}`;
       
+      let duration = 0;
+      try {
+        duration = await getAudioDuration(outputFilePath);
+      } catch (err) {
+        logger.warn(`Failed to get duration for ${outputFilePath}: ${err.message}`);
+      }
+
       const attributes = [
-          new Api.DocumentAttributeAudio({ title: finalBaseName, performer: authorName || '' }),
+          new Api.DocumentAttributeAudio({ 
+            title: finalBaseName, 
+            performer: authorName || '',
+            duration: duration
+          }),
           new Api.DocumentAttributeFilename({ fileName: convertedFileName })
       ];
 
       const sendOptions = {
         file: outputFilePath,
-        caption: `✅ *${targetFormat.toUpperCase()}*`,
-        parseMode: 'markdown',
         replyTo: replyToMessageId,
         workers: 16,
         attributes: attributes

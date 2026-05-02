@@ -83,6 +83,22 @@ function convertAudio(inputPath, outputPath, targetFormat, coverPath = null, aut
   });
 }
 
+/**
+ * Get the duration of an audio file in seconds.
+ * @param {string} filePath - Path to the file
+ * @returns {Promise<number>} duration in seconds
+ */
+function getAudioDuration(filePath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(filePath, (err, metadata) => {
+      if (err) return reject(err);
+      const duration = metadata.format.duration;
+      resolve(Math.floor(duration || 0));
+    });
+  });
+}
+
 module.exports = {
   convertAudio,
+  getAudioDuration,
 };
