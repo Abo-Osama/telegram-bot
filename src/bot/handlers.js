@@ -30,8 +30,8 @@ const coverImages = {
 };
 
 const authorPresets = {
-  'mohd':   'شــ. محمد يحيى',
   'jmal':   'شــ. جمال عبدالرحمن',
+  'mohd':   'شــ. محمد يحيى',
   'marwan': 'شــ. مروان مجدي',
 };
 
@@ -119,7 +119,7 @@ module.exports = (client) => {
 
       const sendOptions = {
         file: outputFilePath,
-        caption: `✅ تم التحويل بنجاح إلى *${targetFormat.toUpperCase()}*!`,
+        caption: `✅ *${targetFormat.toUpperCase()}*`,
         parseMode: 'markdown',
         replyTo: replyToMessageId,
         workers: 16,
@@ -181,8 +181,26 @@ module.exports = (client) => {
       if (coverKey === 'custom') {
         session.step = 'WAITING_CUSTOM_COVER';
         sessions.set(userId, session);
-        await safeEdit(chatId, session.coverMsgId, '📁 *أرسل الصورة التي تريدها كغلاف:*', null);
+        await safeEdit(chatId, query.msgId, '📁 *أرسل الصورة التي تريدها كغلاف:*', [
+          [Button.inline('🔙 رجوع', cb('cover:back'))]
+        ]);
         try { await event.answer({ text: 'أرسل الصورة من جهازك' }); } catch(_) {}
+        return;
+      }
+
+      if (coverKey === 'back') {
+        session.step = 'WAITING_COVER';
+        sessions.set(userId, session);
+        const coverButtons = [
+          [Button.inline('شــ. جمال عبدالرحمن', cb('cover:jmal'))],
+          [Button.inline('شــ. محمد يحيى', cb('cover:mohd'))],
+          [Button.inline('شــ. مروان مجدي', cb('cover:marwan'))],
+          [Button.inline('تلاوات المحراب', cb('cover:mihrab'))],
+          [Button.inline('زاد المسلم', cb('cover:zad'))],
+          [Button.inline('📁 رفع صورة من جهازك', cb('cover:custom'))],
+        ];
+        await safeEdit(chatId, query.msgId, '🖼 *اختر صورة الغلاف:*', coverButtons);
+        try { await event.answer(); } catch(_) {}
         return;
       }
 
@@ -193,23 +211,17 @@ module.exports = (client) => {
       session.step = 'WAITING_AUTHOR';
       sessions.set(userId, session);
 
-      // Edit the cover message to show selection
-      await safeEdit(chatId, session.coverMsgId, `🖼 *تم اختيار الصورة:* ${cover.label}`, null);
-
-      // Show author selection buttons
+      // Edit the cover message to show selection and author buttons
       const authorButtons = [
-        [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
         [Button.inline('شــ. جمال عبدالرحمن', cb('author:jmal'))],
+        [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
         [Button.inline('شــ. مروان مجدي', cb('author:marwan'))],
         [Button.inline('✏️ اكتب اسم تاني', cb('author:custom'))],
         [Button.inline('⏭ تخطي', cb('author:skip'))],
+        [Button.inline('🔙 رجوع', cb('author:back'))],
       ];
 
-      await safeSendMessage(chatId, {
-        message: '👤 *اختر اسم المؤلف:*',
-        parseMode: 'markdown',
-        buttons: authorButtons
-      });
+      await safeEdit(chatId, query.msgId, `🖼 *تم اختيار الصورة:* ${cover.label}\n\n👤 *اختر اسم الشيخ:*`, authorButtons);
 
       try { await event.answer({ text: `تم اختيار ${cover.label}` }); } catch(_) {}
       return;
@@ -219,14 +231,45 @@ module.exports = (client) => {
     if (data.startsWith('author:')) {
       const authorKey = data.split(':')[1];
 
+      if (authorKey === 'back') {
+        session.step = 'WAITING_COVER';
+        sessions.set(userId, session);
+        const coverButtons = [
+          [Button.inline('شــ. جمال عبدالرحمن', cb('cover:jmal'))],
+          [Button.inline('شــ. محمد يحيى', cb('cover:mohd'))],
+          [Button.inline('شــ. مروان مجدي', cb('cover:marwan'))],
+          [Button.inline('تلاوات المحراب', cb('cover:mihrab'))],
+          [Button.inline('زاد المسلم', cb('cover:zad'))],
+          [Button.inline('📁 رفع صورة من جهازك', cb('cover:custom'))],
+        ];
+        await safeEdit(chatId, query.msgId, '🖼 *اختر صورة الغلاف:*', coverButtons);
+        try { await event.answer(); } catch(_) {}
+        return;
+      }
+
+      if (authorKey === 'reselect') {
+        session.step = 'WAITING_AUTHOR';
+        sessions.set(userId, session);
+        const authorButtons = [
+          [Button.inline('شــ. جمال عبدالرحمن', cb('author:jmal'))],
+          [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
+          [Button.inline('شــ. مروان مجدي', cb('author:marwan'))],
+          [Button.inline('✏️ اكتب اسم تاني', cb('author:custom'))],
+          [Button.inline('⏭ تخطي', cb('author:skip'))],
+          [Button.inline('🔙 رجوع', cb('author:back'))],
+        ];
+        await safeEdit(chatId, query.msgId, '👤 *اختر اسم الشيخ:*', authorButtons);
+        try { await event.answer(); } catch(_) {}
+        return;
+      }
+
       if (authorKey === 'custom') {
         session.step = 'WAITING_AUTHOR_TEXT';
         sessions.set(userId, session);
-        await safeSendMessage(chatId, {
-          message: '✏️ *اكتب اسم المؤلف:*',
-          parseMode: 'markdown'
-        });
-        try { await event.answer({ text: 'اكتب اسم المؤلف' }); } catch(_) {}
+        await safeEdit(chatId, query.msgId, '✏️ *اكتب اسم الشيخ:*', [
+          [Button.inline('🔙 رجوع', cb('author:reselect'))]
+        ]);
+        try { await event.answer({ text: 'اكتب اسم الشيخ' }); } catch(_) {}
         return;
       }
 
@@ -244,21 +287,34 @@ module.exports = (client) => {
       // Show title step
       const titleButtons = [
         [Button.inline('⏭ تخطي', cb('title:skip'))],
+        [Button.inline('🔙 رجوع', cb('title:back'))],
       ];
 
-      await safeSendMessage(chatId, {
-        message: '📝 *أدخل العنوان (اختياري):*\n\nاكتب العنوان أو اضغط تخطي.',
-        parseMode: 'markdown',
-        buttons: titleButtons
-      });
+      await safeEdit(chatId, query.msgId, `👤 *تم اختيار الشيخ:* ${session.authorName || 'تخطي'}\n\n📝 *أدخل العنوان (اختياري):*\n\nاكتب العنوان أو اضغط تخطي.`, titleButtons);
 
-      try { await event.answer({ text: authorKey === 'skip' ? 'تم تخطي المؤلف' : `تم اختيار ${session.authorName}` }); } catch(_) {}
+      try { await event.answer({ text: authorKey === 'skip' ? 'تم تخطي اسم الشيخ' : `تم اختيار ${session.authorName}` }); } catch(_) {}
       return;
     }
 
     // ── Title selection ────────────────────────────────────────────────────
     if (data.startsWith('title:')) {
       const titleKey = data.split(':')[1];
+
+      if (titleKey === 'back') {
+        session.step = 'WAITING_AUTHOR';
+        sessions.set(userId, session);
+        const authorButtons = [
+          [Button.inline('شــ. جمال عبدالرحمن', cb('author:jmal'))],
+          [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
+          [Button.inline('شــ. مروان مجدي', cb('author:marwan'))],
+          [Button.inline('✏️ اكتب اسم تاني', cb('author:custom'))],
+          [Button.inline('⏭ تخطي', cb('author:skip'))],
+          [Button.inline('🔙 رجوع', cb('author:back'))],
+        ];
+        await safeEdit(chatId, query.msgId, '👤 *اختر اسم الشيخ:*', authorButtons);
+        try { await event.answer(); } catch(_) {}
+        return;
+      }
 
       if (titleKey === 'skip') {
         session.titleName = null;
@@ -322,15 +378,16 @@ module.exports = (client) => {
         await safeSendMessage(chatId, { message: '✅ *تم استلام الصورة!*', parseMode: 'markdown' });
 
         const authorButtons = [
-          [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
           [Button.inline('شــ. جمال عبدالرحمن', cb('author:jmal'))],
+          [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
           [Button.inline('شــ. مروان مجدي', cb('author:marwan'))],
           [Button.inline('✏️ اكتب اسم تاني', cb('author:custom'))],
           [Button.inline('⏭ تخطي', cb('author:skip'))],
+          [Button.inline('🔙 رجوع', cb('author:back'))],
         ];
 
         return safeSendMessage(chatId, {
-          message: '👤 *اختر اسم المؤلف:*',
+          message: '👤 *اختر اسم الشيخ:*',
           parseMode: 'markdown',
           buttons: authorButtons
         });
@@ -341,14 +398,15 @@ module.exports = (client) => {
         if (text.length > 0) {
           session.authorName = text;
         } else {
-          return safeSendMessage(chatId, { message: '⚠️ *إدخال غير صحيح.*\n\nيرجى إرسال اسم المؤلف.', parseMode: 'markdown' });
+          return safeSendMessage(chatId, { message: '⚠️ *إدخال غير صحيح.*\n\nيرجى إرسال اسم الشيخ.', parseMode: 'markdown' });
         }
 
         session.step = 'WAITING_TITLE';
         sessions.set(userId, session);
 
         const titleButtons = [
-          [Button.inline('⏭ تخطي', 'title:skip')],
+          [Button.inline('⏭ تخطي', cb('title:skip'))],
+          [Button.inline('🔙 رجوع', cb('title:back'))],
         ];
 
         return safeSendMessage(chatId, {
