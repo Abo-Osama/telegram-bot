@@ -32,7 +32,8 @@ function convertAudio(inputPath, outputPath, targetFormat, coverPath = null, aut
 
     command
       .toFormat(targetFormat)
-      .addOption('-threads', '0'); // Use all available CPU cores
+      .addOption('-threads', '0') // Use all available CPU cores
+      .addOption('-loglevel', 'error'); // Keep logs clean
     
     // Apply compression
     if (config.audioBitrate) {
@@ -45,8 +46,11 @@ function convertAudio(inputPath, outputPath, targetFormat, coverPath = null, aut
     if (targetFormat === 'mp3') {
       command.audioCodec('libmp3lame').audioQuality(config.mp3Quality);
       
+      // Always use id3v2_version 3 for better Unicode support in MP3 metadata
+      outputOptions.push('-id3v2_version', '3');
+
       if (coverPath) {
-        outputOptions.push('-map', '0:a?', '-map', '1:v?', '-c:v', 'mjpeg', '-id3v2_version', '3', '-metadata:s:v', 'title=Cover', '-metadata:s:v', 'comment=Cover', '-disposition:v', 'attached_pic');
+        outputOptions.push('-map', '0:a?', '-map', '1:v?', '-c:v', 'mjpeg', '-metadata:s:v', 'title=Cover', '-metadata:s:v', 'comment=Cover', '-disposition:v', 'attached_pic');
       } else {
         outputOptions.push('-vn');
       }
@@ -54,12 +58,12 @@ function convertAudio(inputPath, outputPath, targetFormat, coverPath = null, aut
       command.audioCodec('libopus');
     }
 
-    if (authorName) {
-      outputOptions.push('-metadata', `artist=${authorName}`);
+    if (authorName && authorName.trim()) {
+      outputOptions.push('-metadata', `artist=${authorName.trim()}`);
     }
 
-    if (titleName) {
-      outputOptions.push('-metadata', `title=${titleName}`);
+    if (titleName && titleName.trim()) {
+      outputOptions.push('-metadata', `title=${titleName.trim()}`);
     }
 
     if (outputOptions.length > 0) {

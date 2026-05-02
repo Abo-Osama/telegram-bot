@@ -22,17 +22,17 @@ const cb = (str) => Buffer.from(str);
 
 // ── Cover image mapping ──────────────────────────────────────────────────────
 const coverImages = {
-  'jmal':   { file: path.join(__dirname, '../ش_جمال.jpg'),          label: 'شــ. جمال عبدالرحمن' },
-  'mohd':   { file: path.join(__dirname, '../ش_محمد.jpg'),          label: 'شــ. محمد يحيى' },
-  'marwan': { file: path.join(__dirname, '../ش_مروان.jpeg'),        label: 'شــ. مروان مجدي' },
-  'mihrab': { file: path.join(__dirname, '../تلاوات_المحراب.jpg'),  label: 'تلاوات المحراب' },
-  'zad':    { file: path.join(__dirname, '../زاد_المسلم.jpg'),      label: 'زاد المسلم' },
+  'jmal':   { file: path.join(__dirname, '../jmal.jpg'),          label: 'شــ. جمال عبدالرحمن' },
+  'mohd':   { file: path.join(__dirname, '../mohd.jpg'),          label: 'شــ. محمد يحيى' },
+  'marwan': { file: path.join(__dirname, '../marwan.jpeg'),        label: 'شــ. مروان مجدي' },
+  'mihrab': { file: path.join(__dirname, '../mihrab.jpg'),  label: 'تلاوات المحراب' },
+  'zad':    { file: path.join(__dirname, '../zad.jpg'),      label: 'زاد المسلم' },
 };
 
 const authorPresets = {
   'jmal':   'شــ. جمال عبدالرحمن',
   'mohd':   'شــ. محمد يحيى',
-  'marwan': 'مروان مجدي',
+  'marwan': 'شــ. مروان مجدي',
 };
 
 module.exports = (client) => {
@@ -224,7 +224,7 @@ module.exports = (client) => {
       const authorButtons = [
         [Button.inline('شــ. جمال عبدالرحمن', cb('author:jmal'))],
         [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
-        [Button.inline('مروان مجدي', cb('author:marwan'))],
+        [Button.inline('شــ. مروان مجدي', cb('author:marwan'))],
         [Button.inline('✏️ اكتب اسم تاني', cb('author:custom'))],
         [Button.inline('⏭ تخطي', cb('author:skip'))],
         [Button.inline('🔙 رجوع', cb('author:back'))],
