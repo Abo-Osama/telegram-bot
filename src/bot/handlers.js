@@ -32,7 +32,7 @@ const coverImages = {
 const authorPresets = {
   'jmal':   'شــ. جمال عبدالرحمن',
   'mohd':   'شــ. محمد يحيى',
-  'marwan': 'شــ. مروان مجدي',
+  'marwan': 'مروان مجدي',
 };
 
 module.exports = (client) => {
