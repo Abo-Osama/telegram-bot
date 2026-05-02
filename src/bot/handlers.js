@@ -224,7 +224,7 @@ module.exports = (client) => {
       const authorButtons = [
         [Button.inline('شــ. جمال عبدالرحمن', cb('author:jmal'))],
         [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
-        [Button.inline('شــ. مروان مجدي', cb('author:marwan'))],
+        [Button.inline('مروان مجدي', cb('author:marwan'))],
         [Button.inline('✏️ اكتب اسم تاني', cb('author:custom'))],
         [Button.inline('⏭ تخطي', cb('author:skip'))],
         [Button.inline('🔙 رجوع', cb('author:back'))],
