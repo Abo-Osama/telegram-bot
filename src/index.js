@@ -68,6 +68,12 @@ async function bootstrap() {
         logger.error(`⚠️ Telegram FloodWait: You must wait ${err.seconds} seconds before starting the bot again.`);
         process.exit(1);
     }
+    if (err.errorMessage === 'AUTH_KEY_DUPLICATED') {
+        logger.error('⚠️ AUTH_KEY_DUPLICATED - Session file is corrupted or in use by another instance.');
+        logger.info('🗑️ Deleting session.txt and restarting...');
+        await fs.remove(sessionFile);
+        process.exit(1);
+    }
     throw err;
   }
 

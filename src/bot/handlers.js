@@ -32,7 +32,7 @@ const coverImages = {
 const authorPresets = {
   'jmal':   'شــ. جمال عبدالرحمن',
   'mohd':   'شــ. محمد يحيى',
-  'marwan': 'مروان مجدي',
+  'marwan': 'شــ. مروان مجدي',
 };
 
 module.exports = (client) => {
@@ -224,7 +224,7 @@ module.exports = (client) => {
       const authorButtons = [
         [Button.inline('شــ. جمال عبدالرحمن', cb('author:jmal'))],
         [Button.inline('شــ. محمد يحيى', cb('author:mohd'))],
-        [Button.inline('مروان مجدي', cb('author:marwan'))],
+        [Button.inline('شــ. مروان مجدي', cb('author:marwan'))],
         [Button.inline('✏️ اكتب اسم تاني', cb('author:custom'))],
         [Button.inline('⏭ تخطي', cb('author:skip'))],
         [Button.inline('🔙 رجوع', cb('author:back'))],
